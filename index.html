@@ -3,133 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neon SpeedTest</title>
-    <!-- Tailwind CSS untuk styling super cepat dan keren -->
+    <title>BSNL Speedtest - GitHub Pages Edition</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet CSS & JS untuk Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
-        /* Custom Neon Glow effect */
-        .neon-text {
-            text-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4, 0 0 40px #06b6d4;
-        }
-        .neon-border {
-            box-shadow: 0 0 15px #06b6d4, inset 0 0 15px #06b6d4;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .bsnl-glow { box-shadow: 0 0 20px rgba(249, 115, 22, 0.5); }
+        #map { height: 220px; border-radius: 0.75rem; z-index: 1; }
     </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center font-sans">
+<body class="bg-slate-900 text-white min-h-screen flex flex-col items-center py-8">
 
-    <!-- Header -->
-    <div class="text-center mb-10">
-        <h1 class="text-5xl font-bold mb-2 neon-text text-cyan-400">NET<span class="text-white">SPEED</span></h1>
-        <p class="text-gray-400">Simple & Clean Internet Speed Test</p>
+    <!-- Header BSNL -->
+    <div class="text-center mb-6 w-full max-w-4xl px-4">
+        <div class="flex items-center justify-center gap-3 mb-2">
+            <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center font-bold text-lg border-2 border-orange-500">B</div>
+            <h1 class="text-3xl font-extrabold tracking-tight">
+                <span class="text-blue-500">BSNL</span> <span class="text-orange-500">Speedtest</span>
+            </h1>
+        </div>
+        <p class="text-slate-400 text-sm" id="user-location">Mendeteksi lokasi Anda...</p>
     </div>
 
-    <!-- Dashboard Container -->
-    <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 w-11/12 max-w-2xl shadow-2xl">
+    <!-- Main Dashboard -->
+    <div class="bg-slate-800 p-6 rounded-3xl border border-slate-700 w-11/12 max-w-4xl shadow-2xl">
         
-        <!-- Results Grid -->
-        <div class="grid grid-cols-3 gap-6 text-center mb-10">
-            <!-- Ping -->
-            <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
-                <p class="text-sm text-gray-400 uppercase tracking-widest mb-1">Ping</p>
-                <h2 id="ping-result" class="text-3xl font-bold text-yellow-400">-- <span class="text-sm font-normal">ms</span></h2>
-            </div>
-            <!-- Download -->
-            <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
-                <p class="text-sm text-gray-400 uppercase tracking-widest mb-1">Download</p>
-                <h2 id="dl-result" class="text-3xl font-bold text-cyan-400">-- <span class="text-sm font-normal">Mbps</span></h2>
-            </div>
-            <!-- Upload -->
-            <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
-                <p class="text-sm text-gray-400 uppercase tracking-widest mb-1">Upload</p>
-                <h2 id="ul-result" class="text-3xl font-bold text-purple-400">-- <span class="text-sm font-normal">Mbps</span></h2>
+        <!-- Peta Server -->
+        <div class="w-full bg-slate-900 p-2 rounded-xl mb-6 border border-slate-700 relative">
+            <div id="map"></div>
+            <div class="absolute bottom-4 left-4 z-[999] bg-slate-900/90 px-3 py-1.5 rounded-lg text-xs text-orange-400 font-bold border border-orange-500 shadow-lg">
+                Server Publik Terdekat: <span id="target-server-name" class="text-white">Mencari...</span>
             </div>
         </div>
 
-        <!-- Start Button -->
-        <div class="flex justify-center">
-            <button id="start-btn" onclick="startTest()" class="relative inline-flex items-center justify-center w-40 h-40 rounded-full bg-gray-900 border-4 border-cyan-500 text-2xl font-bold text-cyan-400 uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:bg-cyan-900/30 neon-border">
-                Start
+        <!-- Result Grid -->
+        <div class="grid grid-cols-3 gap-4 text-center mb-6">
+            <div class="bg-slate-900/50 p-4 rounded-2xl border-b-2 border-slate-500 shadow-inner">
+                <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Ping</p>
+                <h2 id="ping-val" class="text-2xl md:text-3xl font-bold">-- <span class="text-xs font-normal text-slate-500">ms</span></h2>
+            </div>
+            <div class="bg-slate-900/50 p-4 rounded-2xl border-b-2 border-blue-500 shadow-inner">
+                <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Download</p>
+                <h2 id="dl-val" class="text-2xl md:text-3xl font-bold text-blue-400">-- <span class="text-xs font-normal text-slate-500">Mbps</span></h2>
+            </div>
+            <div class="bg-slate-900/50 p-4 rounded-2xl border-b-2 border-orange-500 shadow-inner">
+                <p class="text-xs text-slate-400 uppercase tracking-widest mb-1">Upload</p>
+                <h2 id="ul-val" class="text-2xl md:text-3xl font-bold text-orange-400">-- <span class="text-xs font-normal text-slate-500">Mbps</span></h2>
+            </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="w-full bg-slate-900 rounded-xl p-4 mb-6 border border-slate-700" style="height: 220px;">
+            <canvas id="speedChart"></canvas>
+        </div>
+
+        <!-- Action Button -->
+        <div class="flex justify-center mt-4">
+            <button id="start-btn" onclick="startEngine()" disabled class="relative flex items-center justify-center w-28 h-28 rounded-full bg-slate-800 border-4 border-orange-500 text-xl font-bold text-white uppercase tracking-wider transition-all duration-300 bsnl-glow opacity-50 cursor-not-allowed">
+                WAIT
             </button>
         </div>
-
-        <!-- Status Message -->
-        <p id="status-msg" class="text-center text-gray-400 mt-6 h-6"></p>
+        <p id="status-text" class="text-center text-slate-400 text-sm mt-4 h-5 font-semibold">Menunggu lokasi...</p>
     </div>
 
-    <!-- Footer -->
-    <p class="mt-10 text-gray-500 text-sm">Hosted on GitHub Pages</p>
-
-    <!-- JavaScript Logic -->
+    <!-- JavaScript Logic (Frontend Only) -->
     <script>
-        async function startTest() {
-            const btn = document.getElementById('start-btn');
-            const status = document.getElementById('status-msg');
-            const pingRes = document.getElementById('ping-result');
-            const dlRes = document.getElementById('dl-result');
-            const ulRes = document.getElementById('ul-result');
+        // --- 1. SETUP MAP & LOKASI (LEAFLET + IPAPI) ---
+        // Daftar server publik virtual (hanya untuk visualisasi map & kalkulasi jarak)
+        const virtualServers = [
+            { name: "Singapore (Cloudflare)", lat: 1.3521, lon: 103.8198 },
+            { name: "Jakarta (Edge)", lat: -6.2088, lon: 106.8456 },
+            { name: "Tokyo (AWS)", lat: 35.6762, lon: 139.6503 },
+            { name: "Sydney (Telstra)", lat: -33.8688, lon: 151.2093 }
+        ];
 
-            // Reset UI
-            btn.disabled = true;
-            btn.classList.add('opacity-50', 'cursor-not-allowed', 'animate-pulse');
-            btn.innerText = "Testing";
-            pingRes.innerHTML = '-- <span class="text-sm font-normal">ms</span>';
-            dlRes.innerHTML = '-- <span class="text-sm font-normal">Mbps</span>';
-            ulRes.innerHTML = '-- <span class="text-sm font-normal">Mbps</span>';
+        let map, userLat, userLon;
 
+        function initMap() {
+            map = L.map('map').setView([-2.5, 118], 3);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(map);
+        }
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius bumi km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+            return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))); 
+        }
+
+        async function detectLocation() {
             try {
-                // 1. Test Ping
-                status.innerText = "Mengukur Ping...";
-                const pingStart = performance.now();
-                // Fetch request ringan untuk cek ping
-                await fetch('https://api.github.com', { mode: 'no-cors', cache: 'no-store' });
-                const pingEnd = performance.now();
-                const pingTime = Math.round(pingEnd - pingStart);
-                pingRes.innerHTML = `${pingTime} <span class="text-sm font-normal">ms</span>`;
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                userLat = data.latitude;
+                userLon = data.longitude;
+                document.getElementById('user-location').innerText = `Provider: ${data.org} | ${data.city}, ${data.country_name}`;
 
-                // 2. Test Download (Menggunakan gambar publik berukuran besar dari Wikipedia ~5MB)
-                status.innerText = "Mengukur kecepatan Download...";
-                const dlStart = performance.now();
-                const cacheBuster = "?nnn=" + pingStart;
-                const dlResponse = await fetch("https://upload.wikimedia.org/wikipedia/commons/2/2d/Snake_River_%285mb%29.jpg" + cacheBuster);
-                const dlBlob = await dlResponse.blob();
-                const dlEnd = performance.now();
-                
-                const dlDurationSec = (dlEnd - dlStart) / 1000;
-                const dlBitsLoaded = dlBlob.size * 8;
-                const dlSpeedBps = dlBitsLoaded / dlDurationSec;
-                const dlSpeedMbps = (dlSpeedBps / (1024 * 1024)).toFixed(2);
-                dlRes.innerHTML = `${dlSpeedMbps} <span class="text-sm font-normal">Mbps</span>`;
+                // Plot User
+                L.circleMarker([userLat, userLon], { color: '#3b82f6', radius: 8, fillOpacity: 1 }).addTo(map).bindPopup("Lokasi Kamu").openPopup();
 
-                // 3. Test Upload (Menggunakan free API endpoint httpbin)
-                status.innerText = "Mengukur kecepatan Upload...";
-                // Bikin dummy file ukuran 2MB
-                const dummyData = new Uint8Array(2 * 1024 * 1024);
-                const ulBlob = new Blob([dummyData]);
-                
-                const ulStart = performance.now();
-                await fetch('https://httpbin.org/post', {
-                    method: 'POST',
-                    body: ulBlob
+                // Cari Server Terdekat
+                let closestServer = virtualServers[0];
+                let minDistance = Infinity;
+
+                virtualServers.forEach(srv => {
+                    let dist = getDistance(userLat, userLon, srv.lat, srv.lon);
+                    if(dist < minDistance) {
+                        minDistance = dist;
+                        closestServer = srv;
+                    }
                 });
-                const ulEnd = performance.now();
-                
-                const ulDurationSec = (ulEnd - ulStart) / 1000;
-                const ulBitsLoaded = ulBlob.size * 8;
-                const ulSpeedBps = ulBitsLoaded / ulDurationSec;
-                const ulSpeedMbps = (ulSpeedBps / (1024 * 1024)).toFixed(2);
-                ulRes.innerHTML = `${ulSpeedMbps} <span class="text-sm font-normal">Mbps</span>`;
 
-                status.innerText = "Test Selesai!";
-            } catch (error) {
-                status.innerText = "Gagal melakukan test. Pastikan koneksi stabil.";
-                console.error(error);
-            } finally {
+                document.getElementById('target-server-name').innerText = `${closestServer.name} (${minDistance.toFixed(0)} km)`;
+                
+                // Plot Server & Tarik Garis
+                L.marker([closestServer.lat, closestServer.lon]).addTo(map).bindPopup("Server Target");
+                L.polyline([[userLat, userLon], [closestServer.lat, closestServer.lon]], {color: '#f97316', weight: 3, dashArray: '5, 8'}).addTo(map);
+                map.fitBounds([[userLat, userLon], [closestServer.lat, closestServer.lon]], { padding: [40, 40] });
+
+                // Aktifin Tombol GO
+                const btn = document.getElementById('start-btn');
+                btn.innerText = "GO";
                 btn.disabled = false;
-                btn.classList.remove('opacity-50', 'cursor-not-allowed', 'animate-pulse');
-                btn.innerText = "Restart";
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                btn.classList.add('hover:bg-orange-600', 'hover:scale-105');
+                document.getElementById('status-text').innerText = "Siap untuk test.";
+
+            } catch (err) {
+                document.getElementById('user-location').innerText = "Gagal mendeteksi lokasi (Bisa jadi terblokir AdBlocker).";
+                document.getElementById('target-server-name').innerText = "Default Public Route";
+                // Tetap aktifkan tombol
+                const btn = document.getElementById('start-btn');
+                btn.innerText = "GO";
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
         }
+
+        // --- 2. SETUP CHART.JS ---
+        const ctx = document.getElementById('speedChart').getContext('2d');
+        let speedChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Mbps', data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.2)', borderWidth: 3, tension: 0.4, fill: true, pointRadius: 0 }] },
+            options: { responsive: true, maintainAspectRatio: false, animation: { duration: 0 }, scales: { x: { display: false }, y: { beginAtZero: true, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } } }, plugins: { legend: { display: false } } }
+        });
+
+        // --- 3. LOGIKA SPEEDTEST (FRONTEND ONLY) ---
+        async function startEngine() {
+            const btn = document.getElementById('start-btn');
+            const status = document.getElementById('status-text');
+            
+            // Reset UI
+            btn.disabled = true;
+            btn.innerText = "TEST";
+            btn.classList.add('opacity-50', 'scale-95');
+            document.getElementById('ping-val').innerHTML = '-- <span class="text-xs text-slate-500">ms</span>';
+            document.getElementById('dl-val').innerHTML = '-- <span class="text-xs text-slate-500">Mbps</span>';
+            document.getElementById('ul-val').innerHTML = '-- <span class="text-xs text-slate-500">Mbps</span>';
+            speedChart.data.labels = []; speedChart.data.datasets[0].data = []; speedChart.update();
+
+            try {
+                // TEST PING
+                status.innerText = "Mengukur Ping...";
+                let pStart = performance.now();
+                await fetch('https://api.github.com/zen', { mode: 'no-cors', cache: 'no-store' });
+                let pEnd = performance.now();
+                document.getElementById('ping-val').innerHTML = `${Math.round(pEnd - pStart)} <span class="text-xs text-slate-500">ms</span>`;
+
+                // TEST DOWNLOAD (Readable Stream via Wikimedia)
+                status.innerText = "Mengukur kecepatan Download...";
+                speedChart.data.datasets[0].borderColor = '#3b82f6';
+                speedChart.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.2)';
+                
+                const dlRes = await fetch("https://upload.wikimedia.org/wikipedia/commons/f/ff/Pizigani_1367_Chart_10MB.jpg?t=" + Date.now());
+                const reader = dlRes.body.getReader();
+                let dlLastTime = performance.now();
+
+                while(true) {
+                    const {done, value} = await reader.read();
+                    if(done) break;
+                    let now = performance.now();
+                    let duration = (now - dlLastTime) / 1000;
+                    
+                    if(duration > 0.1) {
+                        let mbps = ((value.length * 8) / duration) / (1024 * 1024);
+                        speedChart.data.labels.push('');
+                        speedChart.data.datasets[0].data.push(mbps);
+                        speedChart.update();
+                        document.getElementById('dl-val').innerHTML = `${mbps.toFixed(1)} <span class="text-xs text-slate-500">Mbps</span>`;
+                        dlLastTime = now;
+                    }
+                }
+
+                // Bersihin Chart buat Upload
+                speedChart.data.labels = []; speedChart.data.datasets[0].data = []; speedChart.update();
+
+                // TEST UPLOAD (XHR Progress via HTTPBin)
+                status.innerText = "Mengukur kecepatan Upload...";
+                speedChart.data.datasets[0].borderColor = '#f97316';
+                speedChart.data.datasets[0].backgroundColor = 'rgba(249, 115, 22, 0.2)';
+
+                await new Promise((resolve) => {
+                    const xhr = new XMLHttpRequest();
+                    const dummyData = new Uint8Array(2 * 1024 * 1024); // 2MB Dummy file
+                    let ulLastTime = performance.now();
+                    let lastLoaded = 0;
+
+                    xhr.upload.onprogress = (e) => {
+                        let now = performance.now();
+                        let duration = (now - ulLastTime) / 1000;
+                        if(duration > 0.1) {
+                            let mbps = (((e.loaded - lastLoaded) * 8) / duration) / (1024 * 1024);
+                            speedChart.data.labels.push('');
+                            speedChart.data.datasets[0].data.push(mbps);
+                            speedChart.update();
+                            document.getElementById('ul-val').innerHTML = `${mbps.toFixed(1)} <span class="text-xs text-slate-500">Mbps</span>`;
+                            ulLastTime = now;
+                            lastLoaded = e.loaded;
+                        }
+                    };
+                    xhr.onload = () => resolve();
+                    xhr.open("POST", "https://httpbin.org/post", true);
+                    xhr.send(dummyData);
+                });
+
+                status.innerText = "Pengujian Selesai!";
+            } catch (err) {
+                status.innerText = "Terjadi kesalahan jaringan.";
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'scale-95');
+                btn.innerText = "RETEST";
+            }
+        }
+
+        // Jalankan pas web dibuka
+        initMap();
+        detectLocation();
     </script>
 </body>
 </html>
