@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon SpeedTest</title>
+    <!-- Tailwind CSS untuk styling super cepat dan keren -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom Neon Glow effect */
+        .neon-text {
+            text-shadow: 0 0 10px #06b6d4, 0 0 20px #06b6d4, 0 0 40px #06b6d4;
+        }
+        .neon-border {
+            box-shadow: 0 0 15px #06b6d4, inset 0 0 15px #06b6d4;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center font-sans">
+
+    <!-- Header -->
+    <div class="text-center mb-10">
+        <h1 class="text-5xl font-bold mb-2 neon-text text-cyan-400">NET<span class="text-white">SPEED</span></h1>
+        <p class="text-gray-400">Simple & Clean Internet Speed Test</p>
+    </div>
+
+    <!-- Dashboard Container -->
+    <div class="bg-gray-800 p-8 rounded-2xl border border-gray-700 w-11/12 max-w-2xl shadow-2xl">
+        
+        <!-- Results Grid -->
+        <div class="grid grid-cols-3 gap-6 text-center mb-10">
+            <!-- Ping -->
+            <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
+                <p class="text-sm text-gray-400 uppercase tracking-widest mb-1">Ping</p>
+                <h2 id="ping-result" class="text-3xl font-bold text-yellow-400">-- <span class="text-sm font-normal">ms</span></h2>
+            </div>
+            <!-- Download -->
+            <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
+                <p class="text-sm text-gray-400 uppercase tracking-widest mb-1">Download</p>
+                <h2 id="dl-result" class="text-3xl font-bold text-cyan-400">-- <span class="text-sm font-normal">Mbps</span></h2>
+            </div>
+            <!-- Upload -->
+            <div class="bg-gray-700/50 p-4 rounded-xl border border-gray-600">
+                <p class="text-sm text-gray-400 uppercase tracking-widest mb-1">Upload</p>
+                <h2 id="ul-result" class="text-3xl font-bold text-purple-400">-- <span class="text-sm font-normal">Mbps</span></h2>
+            </div>
+        </div>
+
+        <!-- Start Button -->
+        <div class="flex justify-center">
+            <button id="start-btn" onclick="startTest()" class="relative inline-flex items-center justify-center w-40 h-40 rounded-full bg-gray-900 border-4 border-cyan-500 text-2xl font-bold text-cyan-400 uppercase tracking-widest transition-all duration-300 hover:scale-105 hover:bg-cyan-900/30 neon-border">
+                Start
+            </button>
+        </div>
+
+        <!-- Status Message -->
+        <p id="status-msg" class="text-center text-gray-400 mt-6 h-6"></p>
+    </div>
+
+    <!-- Footer -->
+    <p class="mt-10 text-gray-500 text-sm">Hosted on GitHub Pages</p>
+
+    <!-- JavaScript Logic -->
+    <script>
+        async function startTest() {
+            const btn = document.getElementById('start-btn');
+            const status = document.getElementById('status-msg');
+            const pingRes = document.getElementById('ping-result');
+            const dlRes = document.getElementById('dl-result');
+            const ulRes = document.getElementById('ul-result');
+
+            // Reset UI
+            btn.disabled = true;
+            btn.classList.add('opacity-50', 'cursor-not-allowed', 'animate-pulse');
+            btn.innerText = "Testing";
+            pingRes.innerHTML = '-- <span class="text-sm font-normal">ms</span>';
+            dlRes.innerHTML = '-- <span class="text-sm font-normal">Mbps</span>';
+            ulRes.innerHTML = '-- <span class="text-sm font-normal">Mbps</span>';
+
+            try {
+                // 1. Test Ping
+                status.innerText = "Mengukur Ping...";
+                const pingStart = performance.now();
+                // Fetch request ringan untuk cek ping
+                await fetch('https://api.github.com', { mode: 'no-cors', cache: 'no-store' });
+                const pingEnd = performance.now();
+                const pingTime = Math.round(pingEnd - pingStart);
+                pingRes.innerHTML = `${pingTime} <span class="text-sm font-normal">ms</span>`;
+
+                // 2. Test Download (Menggunakan gambar publik berukuran besar dari Wikipedia ~5MB)
+                status.innerText = "Mengukur kecepatan Download...";
+                const dlStart = performance.now();
+                const cacheBuster = "?nnn=" + pingStart;
+                const dlResponse = await fetch("https://upload.wikimedia.org/wikipedia/commons/2/2d/Snake_River_%285mb%29.jpg" + cacheBuster);
+                const dlBlob = await dlResponse.blob();
+                const dlEnd = performance.now();
+                
+                const dlDurationSec = (dlEnd - dlStart) / 1000;
+                const dlBitsLoaded = dlBlob.size * 8;
+                const dlSpeedBps = dlBitsLoaded / dlDurationSec;
+                const dlSpeedMbps = (dlSpeedBps / (1024 * 1024)).toFixed(2);
+                dlRes.innerHTML = `${dlSpeedMbps} <span class="text-sm font-normal">Mbps</span>`;
+
+                // 3. Test Upload (Menggunakan free API endpoint httpbin)
+                status.innerText = "Mengukur kecepatan Upload...";
+                // Bikin dummy file ukuran 2MB
+                const dummyData = new Uint8Array(2 * 1024 * 1024);
+                const ulBlob = new Blob([dummyData]);
+                
+                const ulStart = performance.now();
+                await fetch('https://httpbin.org/post', {
+                    method: 'POST',
+                    body: ulBlob
+                });
+                const ulEnd = performance.now();
+                
+                const ulDurationSec = (ulEnd - ulStart) / 1000;
+                const ulBitsLoaded = ulBlob.size * 8;
+                const ulSpeedBps = ulBitsLoaded / ulDurationSec;
+                const ulSpeedMbps = (ulSpeedBps / (1024 * 1024)).toFixed(2);
+                ulRes.innerHTML = `${ulSpeedMbps} <span class="text-sm font-normal">Mbps</span>`;
+
+                status.innerText = "Test Selesai!";
+            } catch (error) {
+                status.innerText = "Gagal melakukan test. Pastikan koneksi stabil.";
+                console.error(error);
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed', 'animate-pulse');
+                btn.innerText = "Restart";
+            }
+        }
+    </script>
+</body>
+</html>
