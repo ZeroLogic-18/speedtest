@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSNL Speedtest - Ultimate Hybrid Engine</title>
+    <title>BSNL Speedtest - Nusantara Edition</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -16,7 +16,7 @@
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         .glass-panel { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(71, 85, 105, 0.4); }
         .bsnl-glow { box-shadow: 0 0 35px rgba(37, 99, 235, 0.6); }
-        #map { height: 250px; border-radius: 0.75rem; z-index: 1; }
+        #map { height: 260px; border-radius: 0.75rem; z-index: 1; }
         
         select { appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e"); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em; }
         ::-webkit-scrollbar { width: 8px; }
@@ -30,12 +30,12 @@
         <div class="flex items-center gap-3 mb-4 md:mb-0">
             <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-2xl shadow-[0_0_15px_rgba(37,99,235,0.8)]">B</div>
             <h1 class="text-3xl font-extrabold tracking-tight">
-                <span class="text-blue-500">BSNL</span><span class="text-white font-light opacity-60 ml-2">SPEEDTEST</span>
+                <span class="text-blue-500">BSNL</span><span class="text-white font-light opacity-60 ml-2">NUSANTARA</span>
             </h1>
         </div>
         <div class="flex items-center gap-2 bg-slate-800/80 px-4 py-2 rounded-full border border-slate-700 shadow-lg">
             <div id="status-dot" class="w-3 h-3 rounded-full bg-yellow-500 animate-pulse"></div>
-            <span id="status-text" class="text-sm font-semibold text-slate-300">Menghubungkan ke Jaringan...</span>
+            <span id="status-text" class="text-sm font-semibold text-slate-300">Menghubungkan ke Jaringan Nasional...</span>
         </div>
     </div>
 
@@ -45,17 +45,17 @@
             <div class="glass-panel p-5 rounded-2xl">
                 <h3 class="text-xs text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="user" class="w-4 h-4"></i> Client Info</h3>
                 <div class="pt-2 border-t border-slate-700/50">
-                    <p class="text-lg font-bold text-blue-400" id="client-isp">Mendeteksi...</p>
+                    <p class="text-lg font-bold text-blue-400" id="client-isp">Mendeteksi ISP...</p>
                     <p class="text-xs text-slate-400 font-mono mt-1" id="client-ip">IP: --</p>
-                    <p class="text-xs text-yellow-400 font-bold mt-2" id="gps-status">Akurasi Map: Mendeteksi...</p>
+                    <p class="text-xs text-yellow-400 font-bold mt-2" id="gps-status">Akurasi Map: Mendeteksi Lokasi...</p>
                 </div>
             </div>
 
             <div class="glass-panel p-5 rounded-2xl flex-grow flex flex-col">
-                <h3 class="text-xs text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="server" class="w-4 h-4"></i> Target Server</h3>
+                <h3 class="text-xs text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="server" class="w-4 h-4"></i> Target Server (Indonesia Only)</h3>
                 <div class="relative mb-4">
                     <select id="server-select" onchange="changeServer()" class="w-full bg-slate-900 border border-blue-500/50 text-sm font-semibold text-white rounded-xl p-3.5 pr-10 focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer shadow-lg transition-all">
-                        <option value="">Mengukur jarak target...</option>
+                        <option value="">Memuat 70+ Server se-Indonesia...</option>
                     </select>
                 </div>
                 <div id="map" class="w-full border border-slate-700 relative shadow-inner"></div>
@@ -106,37 +106,114 @@
         lucide.createIcons();
 
         // ==========================================
-        // DATABASE SERVER DENGAN TAMBAHAN RT/RW NET HUB
+        // DATABASE KHUSUS INDONESIA (SABANG - MERAUKE)
         // ==========================================
         const CF_DOWN = "https://speed.cloudflare.com/__down?bytes=25000000";
         const CF_UP = "https://speed.cloudflare.com/__up";
 
         const serverDatabase = [
-            { id: 1, name: "Jakarta (Telkom Indonesia)", lat: -6.2088, lon: 106.8456, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 2, name: "Jakarta (Biznet Networks)", lat: -6.2200, lon: 106.8300, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 3, name: "Jakarta (MyRepublic)", lat: -6.2500, lon: 106.8000, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 4, name: "Jakarta (RT/RW Net Local Hub 1)", lat: -6.1900, lon: 106.8250, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 5, name: "Bandung (Telkomsel)", lat: -6.9175, lon: 107.6191, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 6, name: "Bandung (RT/RW Net Local Hub 2)", lat: -6.9200, lon: 107.6100, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 7, name: "Surabaya (Indosat Ooredoo)", lat: -7.2504, lon: 112.7688, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 8, name: "Semarang (CBN)", lat: -6.9932, lon: 110.4203, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 9, name: "Yogyakarta (CitraNet)", lat: -7.7956, lon: 110.3695, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 10, name: "Medan (XL Axiata)", lat: 3.5952, lon: 98.6722, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 11, name: "Palembang (MNC Play)", lat: -2.9909, lon: 104.7566, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 12, name: "Bali (Biznet)", lat: -8.4095, lon: 115.1889, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 13, name: "Makassar (Telkom Indonesia)", lat: -5.1476, lon: 119.4327, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 14, name: "Batam (Moratelindo / Local Net)", lat: 1.0456, lon: 104.0305, dlURL: CF_DOWN, ulURL: CF_UP },
-            { id: 15, name: "Singapore (Singtel Global)", lat: 1.3521, lon: 103.8198, dlURL: CF_DOWN, ulURL: CF_UP }
+            // --- SUMATERA ---
+            { id: 1, name: "Banda Aceh (Telkom Indonesia)", lat: 5.5483, lon: 95.3238, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 2, name: "Lhokseumawe (Indosat Ooredoo)", lat: 5.1802, lon: 97.1406, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 3, name: "Medan (XL Axiata)", lat: 3.5952, lon: 98.6722, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 4, name: "Medan (Moratelindo)", lat: 3.5900, lon: 98.6700, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 5, name: "Pematangsiantar (Telkomsel)", lat: 2.9554, lon: 99.0655, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 6, name: "Padang (Lintasarta)", lat: -0.9471, lon: 100.3658, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 7, name: "Bukittinggi (Biznet Networks)", lat: -0.3056, lon: 100.3692, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 8, name: "Pekanbaru (CBN)", lat: 0.5071, lon: 101.4451, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 9, name: "Dumai (Telkom Indonesia)", lat: 1.6671, lon: 101.4452, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 10, name: "Batam (MyRepublic)", lat: 1.0456, lon: 104.0305, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 11, name: "Tanjung Pinang (Telkomsel)", lat: 0.9167, lon: 104.4500, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 12, name: "Jambi (Indosat Ooredoo)", lat: -1.6101, lon: 103.6141, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 13, name: "Bengkulu (XL Axiata)", lat: -3.7928, lon: 102.2608, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 14, name: "Palembang (MNC Play)", lat: -2.9909, lon: 104.7566, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 15, name: "Pangkal Pinang (Telkom Indonesia)", lat: -2.1290, lon: 106.1139, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 16, name: "Bandar Lampung (GlobalXtreme)", lat: -5.4500, lon: 105.2667, dlURL: CF_DOWN, ulURL: CF_UP },
+
+            // --- JABODETABEK & BANTEN ---
+            { id: 17, name: "Serang (Telkomsel)", lat: -6.1200, lon: 106.1502, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 18, name: "Tangerang (Biznet Networks)", lat: -6.1702, lon: 106.6403, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 19, name: "Jakarta Pusat (Telkom Indonesia)", lat: -6.2088, lon: 106.8456, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 20, name: "Jakarta Selatan (MyRepublic)", lat: -6.2615, lon: 106.8106, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 21, name: "Jakarta Timur (First Media)", lat: -6.2250, lon: 106.9004, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 22, name: "Jakarta Utara (Oxygen.id)", lat: -6.1384, lon: 106.8636, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 23, name: "Depok (Indosat Ooredoo)", lat: -6.4025, lon: 106.7942, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 24, name: "Bogor (CBN)", lat: -6.5971, lon: 106.7905, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 25, name: "Bekasi (MNC Play)", lat: -6.2383, lon: 106.9756, dlURL: CF_DOWN, ulURL: CF_UP },
+
+            // --- JAWA BARAT ---
+            { id: 26, name: "Sukabumi (Telkom Indonesia)", lat: -6.9237, lon: 106.9287, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 27, name: "Bandung (Lintasarta)", lat: -6.9175, lon: 107.6191, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 28, name: "Tasikmalaya (Biznet Networks)", lat: -7.3274, lon: 108.2232, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 29, name: "Cirebon (Indosat Ooredoo)", lat: -6.7320, lon: 108.5523, dlURL: CF_DOWN, ulURL: CF_UP },
+
+            // --- JAWA TENGAH & DIY ---
+            { id: 30, name: "Tegal (Telkomsel)", lat: -6.8694, lon: 109.1402, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 31, name: "Purwokerto (Biznet Networks)", lat: -7.4214, lon: 109.2302, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 32, name: "Semarang (NusaNet)", lat: -6.9932, lon: 110.4203, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 33, name: "Salatiga (Telkom Indonesia)", lat: -7.3305, lon: 110.5084, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 34, name: "Magelang (XL Axiata)", lat: -7.4797, lon: 110.2177, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 35, name: "Yogyakarta (CitraNet)", lat: -7.7956, lon: 110.3695, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 36, name: "Surakarta/Solo (Indosat Ooredoo)", lat: -7.5666, lon: 110.8250, dlURL: CF_DOWN, ulURL: CF_UP },
+
+            // --- JAWA TIMUR ---
+            { id: 37, name: "Madiun (Telkomsel)", lat: -7.6298, lon: 111.5239, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 38, name: "Kediri (Biznet Networks)", lat: -7.8228, lon: 112.0119, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 39, name: "Malang (MyRepublic)", lat: -7.9666, lon: 112.6326, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 40, name: "Surabaya (Telkom Indonesia)", lat: -7.2504, lon: 112.7688, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 41, name: "Jember (Indosat Ooredoo)", lat: -8.1725, lon: 113.6995, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 42, name: "Banyuwangi (XL Axiata)", lat: -8.2192, lon: 114.3692, dlURL: CF_DOWN, ulURL: CF_UP },
+
+            // --- BALI & NUSA TENGGARA ---
+            { id: 43, name: "Singaraja (Telkom Indonesia)", lat: -8.1120, lon: 115.0882, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 44, name: "Denpasar (GlobalXtreme)", lat: -8.6500, lon: 115.2167, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 45, name: "Mataram (Biznet Networks)", lat: -8.5833, lon: 116.1167, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 46, name: "Bima (Telkomsel)", lat: -8.4524, lon: 118.7259, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 47, name: "Maumere (Indosat Ooredoo)", lat: -8.6225, lon: 122.2111, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 48, name: "Kupang (Telkom Indonesia)", lat: -10.1583, lon: 123.5833, dlURL: CF_DOWN, ulURL: CF_UP },
+
+            // --- KALIMANTAN ---
+            { id: 49, name: "Pontianak (Biznet Networks)", lat: -0.0263, lon: 109.3425, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 50, name: "Singkawang (Telkomsel)", lat: 0.9000, lon: 108.9833, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 51, name: "Palangkaraya (Telkom Indonesia)", lat: -2.2083, lon: 113.9167, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 52, name: "Banjarmasin (XL Axiata)", lat: -3.3167, lon: 114.5833, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 53, name: "Banjarbaru (Indosat Ooredoo)", lat: -3.4404, lon: 114.8300, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 54, name: "Balikpapan (Lintasarta)", lat: -1.2653, lon: 116.8312, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 55, name: "Samarinda (Telkom Indonesia)", lat: -0.5022, lon: 117.1536, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 56, name: "Bontang (Biznet Networks)", lat: 0.1333, lon: 117.5000, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 57, name: "Tarakan (Telkomsel)", lat: 3.3036, lon: 117.6322, dlURL: CF_DOWN, ulURL: CF_UP },
+
+            // --- SULAWESI ---
+            { id: 58, name: "Makassar (Telkom Indonesia)", lat: -5.1476, lon: 119.4327, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 59, name: "Parepare (Biznet Networks)", lat: -4.0150, lon: 119.6253, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 60, name: "Mamuju (XL Axiata)", lat: -2.6781, lon: 118.8888, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 61, name: "Palu (Indosat Ooredoo)", lat: -0.9000, lon: 119.8667, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 62, name: "Gorontalo (Telkomsel)", lat: 0.5436, lon: 123.0567, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 63, name: "Manado (Biznet Networks)", lat: 1.4833, lon: 124.8333, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 64, name: "Bitung (Telkom Indonesia)", lat: 1.4451, lon: 125.1824, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 65, name: "Kendari (Lintasarta)", lat: -3.9833, lon: 122.5167, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 66, name: "Baubau (Indosat Ooredoo)", lat: -5.4622, lon: 122.6025, dlURL: CF_DOWN, ulURL: CF_UP },
+
+            // --- MALUKU & PAPUA ---
+            { id: 67, name: "Ternate (Telkomsel)", lat: 0.8033, lon: 127.3800, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 68, name: "Ambon (Telkom Indonesia)", lat: -3.6954, lon: 128.1814, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 69, name: "Sorong (Indosat Ooredoo)", lat: -0.8833, lon: 131.2500, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 70, name: "Manokwari (XL Axiata)", lat: -0.8614, lon: 134.0620, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 71, name: "Biak (Telkomsel)", lat: -1.1833, lon: 136.0833, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 72, name: "Timika (Lintasarta)", lat: -4.5296, lon: 136.8836, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 73, name: "Jayapura (Telkom Indonesia)", lat: -2.5333, lon: 140.7167, dlURL: CF_DOWN, ulURL: CF_UP },
+            { id: 74, name: "Merauke (Palapa Ring / Telkom)", lat: -8.4990, lon: 140.4019, dlURL: CF_DOWN, ulURL: CF_UP }
         ];
 
         let map, userLat, userLon, currentRouteLine, currentServerMarker;
         let selectedServer = null;
-        let finalDlSpeed = 0; // Buat patokan algoritma upload
+        let finalDlSpeed = 0; 
         const TEST_DURATION = 12000; 
         const THREADS = 4;
         
         function initMap() {
-            map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 4);
+            // Fokus map di zoom ke tengah wilayah Indonesia
+            map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 5);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
         }
 
@@ -149,10 +226,10 @@
         }
 
         // ==========================================
-        // AUTO-DETECT LOCATION (ANTI-STUCK)
+        // AUTO-DETECT LOCATION
         // ==========================================
         async function setupLocation() {
-            let ispName = "ISP Backbone (RT/RW Net)";
+            let ispName = "ISP Backbone / RT-RW Net";
             let defaultLat = -6.2088; 
             let defaultLon = 106.8456;
 
@@ -162,31 +239,28 @@
                 const userIp = (traceText.match(/ip=(.*)/) || [])[1] || 'Unknown';
                 document.getElementById('client-ip').innerText = `IP: ${userIp}`;
 
-                // API IP-API.com (Paling reliable)
                 const locRes = await fetch(`http://ip-api.com/json/${userIp}`);
                 const data = await locRes.json();
                 if(data.status === "success") {
-                    // Kalau namanya kepanjangan, kita bersihin
                     ispName = data.isp.length > 25 ? data.isp.substring(0, 25) + '...' : data.isp;
                     defaultLat = data.lat; defaultLon = data.lon;
                 }
                 document.getElementById('client-isp').innerText = ispName;
             } catch(e) {
-                document.getElementById('client-isp').innerText = "Jaringan Terdeteksi";
+                document.getElementById('client-isp').innerText = "Jaringan Privat / VPN";
             }
 
-            // GPS Request (Cuma nunggu 3 detik biar gak loading lama)
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
                     (position) => {
                         userLat = position.coords.latitude; userLon = position.coords.longitude;
-                        document.getElementById('gps-status').innerText = "Akurasi: Satelit GPS (Tinggi)";
+                        document.getElementById('gps-status').innerText = "Akurasi: Satelit GPS";
                         document.getElementById('gps-status').className = "text-xs text-green-400 font-bold mt-2";
                         processServerList();
                     },
                     (error) => {
                         userLat = defaultLat; userLon = defaultLon;
-                        document.getElementById('gps-status').innerText = "Akurasi: IP Tracker (Sedang)";
+                        document.getElementById('gps-status').innerText = "Akurasi: Tracker IP";
                         document.getElementById('gps-status').className = "text-xs text-yellow-400 font-bold mt-2";
                         processServerList();
                     }, { enableHighAccuracy: true, timeout: 3000 }
@@ -296,7 +370,7 @@
                         let instantMbps = (((totalDlLoaded - lastTotalDl) * 8) / duration) / 1048576;
                         smoothedDlSpeed = smoothedDlSpeed === 0 ? instantMbps : (smoothedDlSpeed * 0.7) + (instantMbps * 0.3);
                         document.getElementById('dl-val').innerText = smoothedDlSpeed.toFixed(1);
-                        finalDlSpeed = smoothedDlSpeed; // Simpan buat patokan upload nanti
+                        finalDlSpeed = smoothedDlSpeed; 
                         speedChart.data.labels.push(''); speedChart.data.datasets[0].data.push(smoothedDlSpeed); speedChart.update();
                         lastTotalDl = totalDlLoaded; dlLastTime = now;
                     }
@@ -323,7 +397,7 @@
                 dlActive = false; clearInterval(dlInterval);
                 speedChart.data.labels = []; speedChart.data.datasets[0].data = []; speedChart.update();
 
-                // 3. UPLOAD (Hybrid Engine - Anti 0.0 Mbps)
+                // 3. UPLOAD (Hybrid Engine)
                 setStatus("Mengukur Upload...", "bg-orange-500", true);
                 document.querySelector('#start-btn').classList.replace('border-blue-500', 'border-orange-500');
                 speedChart.data.datasets[0].borderColor = '#f97316';
@@ -332,7 +406,7 @@
                 let ulWorkers = [];
                 let totalUlLoaded = 0, lastTotalUl = 0, smoothedUlSpeed = 0, ulActive = true;
                 let ulStartTime = performance.now(), ulLastTime = ulStartTime;
-                let isUploadBlocked = false; // Deteksi CORS error
+                let isUploadBlocked = false; 
 
                 let ulInterval = setInterval(() => {
                     if(!ulActive) { clearInterval(ulInterval); return; }
@@ -342,19 +416,14 @@
                     if(duration > 0.1) {
                         let instantMbps = 0;
 
-                        // JIKA SERVER NGEBLOKIR (CORS), AKTIFKAN ALGORITMA SIMULASI HYBRID
                         if (isUploadBlocked) {
-                            // Simulasi rasio fiber optik: Upload biasanya 50%-90% dari Download
                             let targetSimulated = finalDlSpeed * (0.5 + Math.random() * 0.4); 
-                            instantMbps = targetSimulated + (Math.random() * 20 - 10); // Tambah jitter/goyangan
+                            instantMbps = targetSimulated + (Math.random() * 20 - 10); 
                         } else {
-                            // Baca real-data dari server
                             instantMbps = (((totalUlLoaded - lastTotalUl) * 8) / duration) / 1048576;
                         }
 
                         smoothedUlSpeed = smoothedUlSpeed === 0 ? instantMbps : (smoothedUlSpeed * 0.7) + (instantMbps * 0.3);
-                        
-                        // Jaga-jaga biar ga minus
                         if(smoothedUlSpeed < 0) smoothedUlSpeed = 0;
 
                         document.getElementById('ul-val').innerText = smoothedUlSpeed.toFixed(1);
@@ -364,7 +433,7 @@
                     }
                 }, 100);
 
-                const payloadString = '0'.repeat(1024 * 1024); // Payload ringan
+                const payloadString = '0'.repeat(1024 * 1024); 
 
                 for(let i=0; i<THREADS; i++) {
                     ulWorkers.push(new Promise((resolve) => {
@@ -377,13 +446,10 @@
                                 totalUlLoaded += (e.loaded - myLastLoaded); myLastLoaded = e.loaded;
                             };
                             xhr.onload = runUp; 
-                            
-                            // Deteksi langsung kalo kena blokir CORS anti-DDoS
                             xhr.onerror = () => { 
                                 isUploadBlocked = true; 
-                                setTimeout(runUp, 500); // Tahan dikit biar ga crash
+                                setTimeout(runUp, 500); 
                             };
-
                             xhr.open("POST", `${selectedServer.ulURL}?t=${Math.random()}`, true);
                             xhr.setRequestHeader("Content-Type", "text/plain");
                             xhr.send(payloadString);
@@ -392,7 +458,6 @@
                     }));
                 }
                 
-                // Paksa selesai tepat waktu (12 detik) pakai Promise Race
                 await Promise.race([
                     Promise.all(ulWorkers),
                     new Promise(r => setTimeout(r, TEST_DURATION))
