@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSNL Speedtest - Multi-Threaded Engine</title>
+    <title>BSNL Speedtest - Core Engine</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -41,15 +41,15 @@
                 <h3 class="text-xs text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> Engine Specs</h3>
                 <div class="space-y-3">
                     <div class="flex justify-between text-sm">
-                        <span class="text-slate-400">Connection Mode</span>
+                        <span class="text-slate-400">Mode Koneksi</span>
                         <span class="text-blue-400 font-bold">Parallel (4 Threads)</span>
                     </div>
                     <div class="flex justify-between text-sm">
                         <span class="text-slate-400">Target Host</span>
-                        <span class="text-blue-400 font-bold">Cloudflare Anycast</span>
+                        <span class="text-blue-400 font-bold">Global Edge</span>
                     </div>
                     <div class="pt-3 border-t border-slate-700/50">
-                        <p class="text-lg font-bold text-white" id="client-isp">Mendeteksi ISP...</p>
+                        <p class="text-lg font-bold text-white" id="client-isp">Mendeteksi...</p>
                         <p class="text-xs text-slate-400 font-mono mt-1" id="client-ip">IP: --</p>
                     </div>
                 </div>
@@ -107,28 +107,44 @@
         // Variabel Global
         let map, userLat, userLon;
         const TEST_DURATION = 12000; 
-        const THREADS = 4; // BUKA 4 KONEKSI SEKALIGUS (RAHASIA OOKLA)
+        const THREADS = 4; // 4 Koneksi Paralel!
         
         function initMap() {
             map = L.map('map', { zoomControl: false }).setView([-2.5, 118], 4);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
         }
 
+        // FUNGSI DETEKSI IP (KEBAL ADBLOCK)
         async function detectLocation() {
             try {
-                const res = await fetch('https://ipapi.co/json/');
-                const data = await res.json();
-                userLat = data.latitude; userLon = data.longitude;
-                
-                document.getElementById('client-isp').innerText = data.org || "Unknown ISP";
-                document.getElementById('client-ip').innerText = `IP: ${data.ip}`;
+                // 1. Ambil IP dari jalur Cloudflare Trace (Pasti Tembus)
+                const traceRes = await fetch('https://cloudflare.com/cdn-cgi/trace');
+                const traceText = await traceRes.text();
+                const ipMatch = traceText.match(/ip=(.*)/);
+                const userIp = ipMatch ? ipMatch[1] : 'Unknown';
+                document.getElementById('client-ip').innerText = `IP: ${userIp}`;
 
-                L.circleMarker([userLat, userLon], { color: '#3b82f6', radius: 8, fillOpacity: 0.8 }).addTo(map).bindPopup("Lokasi Anda").openPopup();
+                // 2. Ambil Lokasi/ISP berdasarkan IP
+                try {
+                    const locRes = await fetch(`https://ipapi.co/${userIp}/json/`);
+                    const data = await locRes.json();
+                    userLat = data.latitude || -2.5; 
+                    userLon = data.longitude || 118;
+                    document.getElementById('client-isp').innerText = data.org || "Network Terdeteksi";
+                } catch(e) {
+                    // Kalau info lokasi tetep diblokir, kasih default
+                    document.getElementById('client-isp').innerText = "Privasi Terlindungi";
+                    userLat = -2.5; userLon = 118;
+                }
+
+                // Plot ke Map
+                L.circleMarker([userLat, userLon], { color: '#3b82f6', radius: 8, fillOpacity: 0.8 }).addTo(map).bindPopup("Lokasi Kamu").openPopup();
                 map.setView([userLat, userLon], 5);
 
                 setStatus("Engine Siap (4 Threads Active)", "bg-green-500", false);
             } catch (err) {
-                setStatus("Mode Privat", "bg-green-500", false);
+                document.getElementById('client-isp').innerText = "Koneksi Offline";
+                setStatus("Gagal Membaca Jaringan", "bg-red-500", false);
             }
         }
 
@@ -177,9 +193,9 @@
                 document.getElementById('jitter-val').innerText = Math.round(jitter);
 
                 // ======================================
-                // 2. PARALLEL DOWNLOAD TEST (4 Jalur)
+                // 2. DOWNLOAD TEST (Infinite Loop, 4 Jalur)
                 // ======================================
-                setStatus("Mengukur Download (Parallel)...", "bg-blue-500", true);
+                setStatus("Mengukur Download...", "bg-blue-500", true);
                 speedChart.data.datasets[0].borderColor = '#3b82f6';
                 speedChart.data.datasets[0].backgroundColor = 'rgba(59, 130, 246, 0.2)';
                 
@@ -192,7 +208,7 @@
                 let dlStartTime = performance.now();
                 let dlLastTime = dlStartTime;
 
-                // Fungsi hitung kecepatan gabungan dari 4 jalur
+                // Monitor Kecepatan Gabungan
                 let dlInterval = setInterval(() => {
                     if(!dlActive) { clearInterval(dlInterval); return; }
                     let now = performance.now();
@@ -202,7 +218,6 @@
                         let currentBits = (totalDlLoaded - lastTotalDl) * 8;
                         let instantMbps = (currentBits / duration) / (1024 * 1024);
                         
-                        // EMA Smoothing biar naik turunnya enak diliat
                         if (smoothedDlSpeed === 0) smoothedDlSpeed = instantMbps;
                         else smoothedDlSpeed = (smoothedDlSpeed * 0.7) + (instantMbps * 0.3);
 
@@ -216,37 +231,39 @@
                     }
                 }, 100);
 
-                // Nyalain 4 Thread XHR Download barengan
+                // Nyalain 4 Thread secara looping sampai waktu 12 detik habis
                 for(let i=0; i<THREADS; i++) {
                     dlWorkers.push(new Promise((resolve) => {
-                        const xhr = new XMLHttpRequest();
-                        let myLastLoaded = 0;
-                        xhr.onprogress = (e) => {
-                            if(performance.now() - dlStartTime > TEST_DURATION) { xhr.abort(); resolve(); }
-                            let delta = e.loaded - myLastLoaded;
-                            totalDlLoaded += delta;
-                            myLastLoaded = e.loaded;
-                        };
-                        xhr.onload = () => resolve();
-                        xhr.onerror = () => resolve();
-                        // Tiap jalur tarik 25MB (total 100MB ditarik berbarengan)
-                        xhr.open("GET", `https://speed.cloudflare.com/__down?bytes=25000000&t=${Math.random()}`, true);
-                        xhr.send();
+                        function runDownload() {
+                            if(performance.now() - dlStartTime > TEST_DURATION) { resolve(); return; }
+                            const xhr = new XMLHttpRequest();
+                            let myLastLoaded = 0;
+                            xhr.onprogress = (e) => {
+                                if(performance.now() - dlStartTime > TEST_DURATION) { xhr.abort(); resolve(); return; }
+                                let delta = e.loaded - myLastLoaded;
+                                totalDlLoaded += delta;
+                                myLastLoaded = e.loaded;
+                            };
+                            xhr.onload = () => runDownload(); // Kalo beres, nembak lagi!
+                            xhr.onerror = () => runDownload();
+                            xhr.open("GET", `https://speed.cloudflare.com/__down?bytes=25000000&t=${Math.random()}`, true);
+                            xhr.send();
+                        }
+                        runDownload();
                     }));
                 }
 
-                // Tunggu sampai semua thread kelar atau waktu habis
                 await Promise.all(dlWorkers);
                 dlActive = false;
                 clearInterval(dlInterval);
 
-                // Reset Chart
+                // Reset Chart buat Upload
                 speedChart.data.labels = []; speedChart.data.datasets[0].data = []; speedChart.update();
 
                 // ======================================
-                // 3. PARALLEL UPLOAD TEST (4 Jalur)
+                // 3. UPLOAD TEST (Infinite Loop, 4 Jalur)
                 // ======================================
-                setStatus("Mengukur Upload (Parallel)...", "bg-orange-500", true);
+                setStatus("Mengukur Upload...", "bg-orange-500", true);
                 document.querySelector('#start-btn').classList.replace('border-blue-500', 'border-orange-500');
                 speedChart.data.datasets[0].borderColor = '#f97316';
                 speedChart.data.datasets[0].backgroundColor = 'rgba(249, 115, 22, 0.2)';
@@ -260,6 +277,7 @@
                 let ulStartTime = performance.now();
                 let ulLastTime = ulStartTime;
 
+                // Monitor Kecepatan Gabungan Upload
                 let ulInterval = setInterval(() => {
                     if(!ulActive) { clearInterval(ulInterval); return; }
                     let now = performance.now();
@@ -282,24 +300,29 @@
                     }
                 }, 100);
 
-                // Bikin data dummy 5MB buat diupload
-                const dummyData = new Uint8Array(5 * 1024 * 1024);
+                const dummyData = new Uint8Array(1 * 1024 * 1024); // Payload 1MB yang aman dari limitasi server publik
 
-                // Nyalain 4 Thread XHR Upload barengan
+                // Nyalain 4 Thread Upload secara looping
                 for(let i=0; i<THREADS; i++) {
                     ulWorkers.push(new Promise((resolve) => {
-                        const xhr = new XMLHttpRequest();
-                        let myLastLoaded = 0;
-                        xhr.upload.onprogress = (e) => {
-                            if(performance.now() - ulStartTime > TEST_DURATION) { xhr.abort(); resolve(); }
-                            let delta = e.loaded - myLastLoaded;
-                            totalUlLoaded += delta;
-                            myLastLoaded = e.loaded;
-                        };
-                        xhr.onload = () => resolve();
-                        xhr.onerror = () => resolve();
-                        xhr.open("POST", `https://speed.cloudflare.com/__up?t=${Math.random()}`, true);
-                        xhr.send(dummyData);
+                        function runUpload() {
+                            if(performance.now() - ulStartTime > TEST_DURATION) { resolve(); return; }
+                            const xhr = new XMLHttpRequest();
+                            let myLastLoaded = 0;
+                            xhr.upload.onprogress = (e) => {
+                                if(performance.now() - ulStartTime > TEST_DURATION) { xhr.abort(); resolve(); return; }
+                                let delta = e.loaded - myLastLoaded;
+                                totalUlLoaded += delta;
+                                myLastLoaded = e.loaded;
+                            };
+                            xhr.onload = () => runUpload(); // Kalo beres, lempar payload lagi!
+                            xhr.onerror = () => runUpload();
+                            
+                            // Ganti endpoint ke HTTPBin yang ramah CORS untuk POST request
+                            xhr.open("POST", `https://httpbin.org/post?t=${Math.random()}`, true);
+                            xhr.send(dummyData);
+                        }
+                        runUpload();
                     }));
                 }
 
@@ -309,7 +332,7 @@
 
                 setStatus("Pengujian Selesai!", "bg-green-500", false);
             } catch (err) {
-                setStatus("Gagal. Coba Lagi.", "bg-red-500", false);
+                setStatus("Terjadi Kesalahan Jaringan", "bg-red-500", false);
             } finally {
                 btn.classList.remove('scale-95', 'opacity-80', 'border-slate-500', 'border-orange-500');
                 btn.classList.add('border-blue-500');
